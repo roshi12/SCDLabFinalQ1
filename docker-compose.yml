@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - microservices-network
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - BLOG_SERVICE_URL=http://blog-service:3002
+      - COMMENT_SERVICE_URL=http://comment-service:3003
+      - PROFILE_SERVICE_URL=http://profile-service:3004
+    depends_on:
+      - auth-service
+      - blog-service
+      - comment-service
+      - profile-service
+    networks:
+      - microservices-network
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      - PORT=3001
+      - MONGO_URI=mongodb://mongodb:27017/auth-service
+    depends_on:
+      - mongodb
+    networks:
+      - microservices-network
+
+  blog-service:
+    build: ./blog-service
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://mongodb:27017/blog-service
+    depends_on:
+      - mongodb
+    networks:
+      - microservices-network
+
+  comment-service:
+    build: ./comment-service
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://mongodb:27017/comment-service
+    depends_on:
+      - mongodb
+    networks:
+      - microservices-network
+
+  profile-service:
+    build: ./profile-service
+    environment:
+      - PORT=3004
+      - MONGO_URI=mongodb://mongodb:27017/profile-service
+    depends_on:
+      - mongodb
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
